@@ -128,7 +128,7 @@ class DAVController extends AbstractController
      */
     protected $server;
 
-    public function __construct(MailerInterface $mailer, BasicAuth $basicAuthBackend, IMAPAuth $IMAPAuthBackend, LDAPAuth $LDAPAuthBackend, UrlGeneratorInterface $router, EntityManagerInterface $entityManager, LoggerInterface $logger, string $publicDir, bool $calDAVEnabled = true, bool $cardDAVEnabled = true, bool $webDAVEnabled = false, ?string $inviteAddress = null, ?string $authMethod = null, ?string $authRealm = null, ?string $webdavPublicDir = null, ?string $webdavTmpDir = null)
+    public function __construct(MailerInterface $mailer, BasicAuth $basicAuthBackend, IMAPAuth $IMAPAuthBackend, LDAPAuth $LDAPAuthBackend, UrlGeneratorInterface $router, EntityManagerInterface $entityManager, LoggerInterface $logger, string $publicDir, bool $calDAVEnabled = true, bool $cardDAVEnabled = true, bool $webDAVEnabled = false, string $inviteAddress = null, string $authMethod = null, string $authRealm = null, string $webdavPublicDir = null, string $webdavTmpDir = null)
     {
         $this->publicDir = $publicDir;
 
@@ -295,8 +295,26 @@ class DAVController extends AbstractController
      */
     public function dav(Request $request, string $path)
     {
-        if ($request->getMethod() === "OPTIONS") {
-            return new Response();
+        // We need to acknowledge the OPTIONS call before sabre/dav for public
+        // calendars since we're circumventing the lib
+        if ('OPTIONS' === $request->getMethod()) {
+            $response = new Response();
+
+            // Adapted from CorePlugin's httpOptions()
+            // https://github.com/sabre-io/dav/blob/master/lib/DAV/CorePlugin.php#L210
+            $methods = $this->server->getAllowedMethods('');
+
+            $response->headers->set('Allow', strtoupper(implode(', ', $methods)));
+            $features = ['1', '3', 'extended-mkcol'];
+
+            foreach ($this->server->getPlugins() as $plugin) {
+                $features = array_merge($features, $plugin->getFeatures());
+            }
+
+            $response->headers->set('DAV', implode(', ', $features));
+            $response->headers->set('MS-Author-Via', 'DAV');
+
+            return $response;
         }
 
         // \Sabre\DAV\Server does not let us use a custom SAPI, and its behaviour

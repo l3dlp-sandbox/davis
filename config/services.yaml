@@ -5,6 +5,8 @@
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
     default_database_driver: "mysql"
+    default_admin_auth_bypass: "false"
+    timezone: '%env(APP_TIMEZONE)%'
 
 services:
     # default configuration for services in *this* file
@@ -56,3 +58,7 @@ services:
         arguments:
             $adminLogin: "%env(ADMIN_LOGIN)%"
             $adminPassword: "%env(ADMIN_PASSWORD)%"
+
+    App\Logging\Monolog\PasswordFilterProcessor:
+        tags:
+            - { name: monolog.processor }

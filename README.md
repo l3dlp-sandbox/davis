@@ -86,6 +86,10 @@ ADMIN_LOGIN=admin
 ADMIN_PASSWORD=test
 ```
 
+> [!NOTE]
+>
+> You can bypass auth entirely if you use a third party authorization provider such as Authelia. In that case, set the `ADMIN_AUTH_BYPASS` env var to `true` (case-sensitive, this is actually the string `true`, not a boolean) to allow full access to the dashboard. This does not change the behaviour of the DAV server.
+
 c. The auth Realm and method for HTTP auth
 
 ```
@@ -116,6 +120,28 @@ f. The paths for the WebDAV installation
 WEBDAV_TMP_DIR='/tmp'
 WEBDAV_PUBLIC_DIR='/webdav'
 ```
+
+g. The log file path
+
+You can use an absolute file path here, and you can use Symfony's `%kernel.logs_dir%` and `%kernel.environment%` placeholders if needed (as in the default value). Setting it to `/dev/null` will disable logging altogether.
+
+```
+LOG_FILE_PATH="%kernel.logs_dir%/%kernel.environment%.log"
+```
+
+h. The timezone you want for the app
+
+This must comply with the [official list](https://www.php.net/manual/en/timezones.php)
+
+```
+APP_TIMEZONE="Australia/Lord_Howe"
+```
+
+> Set a void value like so:
+> ```
+> APP_TIMEZONE=
+> ```
+> in your environment file if you wish to use the **actual default timezone of the server**, and not enforcing it. 
 
 ### Specific environment variables for IMAP and LDAP authentication methods
 
@@ -418,6 +444,14 @@ Depending on how you run Davis, logs are either:
 > [!NOTE]
 >
 > It's `./var/log` (relative to the Davis installation), not `/var/log`
+
+### I have a "Bad timezone configuration env var" error on the dashboard
+
+If you see this:
+
+![Bad timezone configuration env var error](_screenshots/bad_timezone_configuration_env_var.png)
+
+It means that the value you set for the `APP_TIMEZONE` env var is not a correct timezone, as per [the official list](https://www.php.net/manual/en/timezones.php). Your timezone has thus not been set and is the server's default (Here, UTC). Adjust the setting accordingly.
 
 ### I have a 500 and no tables have been created
 
